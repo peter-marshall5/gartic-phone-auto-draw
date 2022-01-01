@@ -83,7 +83,7 @@ class customWebSocket extends WebSocket {
                 if (t?.hasOwnProperty('turnNum')) turnNum = t.turnNum;
             }
         });
-        console.log(ws)
+        // console.log(ws)
         return ws;
     }
     send(...args) {
@@ -167,7 +167,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
       for (let x = 0; x < width; x++) {
         // let pos = i * 4
         let color = rgbToHex(data[pos], data[pos+1], data[pos+2])
-          if (!dict[color]) {
+        if (!dict[color]) {
           dict[color] = `[8,-1,["${color}",${data[3]/255}],${x},${y},1,1`
         } else {
           dict[color] += ',' + x + ',' + y + ',1,1'
@@ -190,7 +190,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
   return sendPackets(packets, story)
 }
 
-function sendPackets(packets, story) {
+function sendPackets (packets, story) {
   console.log('[Autodraw] Sending packets')
   return new Promise(function(resolve) {
     let p = 0
@@ -203,19 +203,11 @@ function sendPackets(packets, story) {
         pongsRecieved++
         console.log('[Autodraw] Pong ' + pongsRecieved + ' / ' + pongCount)
         if (pongsRecieved >= pongCount) {
-          // console.log(pongCount + ' pongs recieved')
+          console.log('[Autodraw] All pongs recieved')
           currWs.removeEventListener('message', pongHandler)
-          waitForBuffer()
+          resolve()
         }
       }
-    }
-    function waitForBuffer () {
-      if (currWs.bufferedAmount == 0) {
-        console.log('[Autodraw] Websocket buffer is empty')
-        resolve()
-        return
-      }
-      setTimeout(waitForBuffer, 60)
     }
     currWs.addEventListener('message', pongHandler)
     currWs.send('2')
@@ -230,7 +222,7 @@ function sendPackets(packets, story) {
 
         // Ping sprinkling
         // Stops server from disconnecting
-        if (sent + packets[p].length > 5000000) {
+        if (sent + packets[p].length > 4000000) {
           currWs.send('2')
           sent = 0
           pongCount++
@@ -267,7 +259,7 @@ let fakeButton = document.createElement('button')
 fakeButton.classList = 'jsx-4289504161 small'
 fakeButton.disabled = true
 fakeButton.style.display = 'none'
-fakeButton.innerHTML = '<i class="jsx-3322258600 ready"></i><strong>Done!</strong>'
+fakeButton.innerHTML = '<i class="jsx-3322258600 pencil"></i><strong>Drawing...</strong>'
 
 function disableButton (e) {
   if (!doneButton) return e
