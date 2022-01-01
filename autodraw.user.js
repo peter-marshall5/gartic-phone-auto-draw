@@ -219,36 +219,7 @@ function sendPackets(packets, story) {
     currWs.addEventListener('message', pongHandler)
     currWs.send('2')
     function sendChunk () {
-      //console.log('Sending packets: ' + p + ' - ' + (p + 40000) + ' / ' + packets.length)
-
       while (p < packets.length) {
-        // None of this works
-        // if (pingSent) {
-        //   pingSent = false
-        //   rateLimitActive = true
-        //   pongCount++
-        // }
-        //
-        // // Rate limiting
-        // if (rateLimitActive) {
-        //   if (currWs.bufferedAmount == 0) {
-        //     rateLimitActive = false
-        //     console.log('Rate limit end')
-        //   } else {
-        //     setTimeout(sendChunk, 100)
-        //     return
-        //   }
-        // }
-        // if (currWs.bufferedAmount > 8000000) {
-        //   console.log('Rate limit start')
-        //   rateLimitActive = true
-        //   currWs.send('2')
-        //   pongCount++
-        //   setTimeout(sendChunk, 100)
-        //   //unsafeWindow.setData((function(e){ return story })())
-        //   return
-        // }
-
         // Check if websocket is in OPEN state
         if (currWs.readyState != WebSocket.OPEN) {
           console.log('[Autodraw] Reconnecting')
@@ -276,10 +247,6 @@ function sendPackets(packets, story) {
 
         if (p >= packets.length) {
           currWs.send('2')
-          // unsafeWindow.setData((function(e){ return story })())
-          // console.log('Pings: ' + pongCount)
-          // Wait for pongs
-          // resolve(pongCount)
           // Exit if the websocket closes
           currWs.addEventListener('close', resolve)
           return
@@ -287,26 +254,6 @@ function sendPackets(packets, story) {
       }
     }
     sendChunk()
-  })
-}
-
-function waitForPongs (pongCount) {
-  // pongCount += 1
-  return new Promise(function(resolve) {
-    let count = 0
-    function handler (e) {
-      if (e.data == '3') {
-        count++
-        console.log('[Autodraw] Pong ' + count + ' / ' + pongCount)
-        if (count >= pongCount) {
-          // console.log(pongCount + ' pongs recieved')
-          currWs.removeEventListener('message', handler)
-          resolve()
-        }
-      }
-    }
-    currWs.addEventListener('message', handler)
-    // console.log('Waiting for pongs')
   })
 }
 
@@ -323,17 +270,13 @@ fakeButton.innerHTML = '<i class="jsx-3322258600 ready"></i><strong>Done!</stron
 
 function disableButton (e) {
   if (!doneButton) return e
-  // console.log('Disabling button')
   doneButton.style.display = 'none'
   fakeButton.style.display = ''
-  // b jsx-4289504161 small
-  // c jsx-2849961842 bottom
   return e
 }
 
 function enableButton (e) {
   if (!doneButton) return e
-  // console.log('Enabling button')
   doneButton.style.display = ''
   fakeButton.style.display = 'none'
   return e
@@ -405,7 +348,6 @@ function injectUI () {
   const addImageButton = document.createElement('div')
   addImageButton.classList = 'jsx-2643802174 tool image'
   addImageButton.style.margin = '6px 0 1px 0'
-  // addImageButton.style.backgroundImage = 'url("/favicon.ico")'
   addImageButton.style.backgroundSize = '100%'
   addImageButton.style.color = '#d16283'
 
@@ -421,12 +363,6 @@ function injectUI () {
     transform: translate(0px, -20px);
   }`
   document.head.appendChild(style)
-  // const plusIcon = document.createElement('div')
-  // plusIcon.style.fontSize = '60px'
-  // plusIcon.style.fontFamily = 'Black'
-  // plusIcon.style.transform = 'translate(-4.7px, -2px)'
-  // plusIcon.innerText = '+'
-  // addImageButton.appendChild(plusIcon)
   sideMenu.appendChild(addImageButton)
 
   // Click handler
@@ -555,7 +491,6 @@ uiStyle.innerText = `
 }`
 
 unsafeWindow.startDrawing = startDrawing
-unsafeWindow.draw = draw
 document.addEventListener('DOMContentLoaded', () => {
   setInterval(injectUI, 300)
 
