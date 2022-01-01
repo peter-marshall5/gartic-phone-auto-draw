@@ -99,6 +99,8 @@ class customWebSocket extends WebSocket {
 unsafeWindow.WebSocket = customWebSocket
 
 function draw (image, fit='zoom', width=758, height=424, penSize=2) {
+  console.log('[Autodraw] Drawing image')
+
   let canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
@@ -189,8 +191,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
 }
 
 function sendPackets(packets, story) {
-  // Send packets with interval
-  // console.log(currWs)
+  console.log('[Autodraw] Sending packets')
   return new Promise(function(resolve) {
     let p = 0
     let sent = 0
@@ -318,9 +319,11 @@ function pickFile () {
 }
 
 function createImage (url) {
+  console.log('[Autodraw] Loading image')
   return new Promise(function(resolve) {
     let image = document.createElement('img')
     image.onload = function() {
+      console.log('[Autodraw] Image loaded')
       resolve(image)
     }
     image.src = url
