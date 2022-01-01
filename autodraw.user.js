@@ -31,11 +31,17 @@ function requestBuffer (url) {
   return fetch(url).then((d) => {return d.arrayBuffer()})
 }
 
+let hexTable = []
+for (let i = 0; i < 256; i++) {
+  let hex = i.toString(16)
+  if (hex.length < 2) {
+    hex = '0' + hex
+  }
+  hexTable.push(hex)
+}
+
 function rgbToHex (r, g, b) {
-  const bin = r << 16 | g << 8 | b;
-  return '#' + (function(h){
-    return new Array(7-h.length).join("0")+h
-  })(bin.toString(16).toUpperCase())
+  return  `#${hexTable[r]}${hexTable[g]}${hexTable[g]}`
 }
 
 const game = {
