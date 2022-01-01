@@ -32,7 +32,10 @@ function requestBuffer (url) {
 }
 
 function rgbToHex (r, g, b) {
-  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  const bin = r << 16 | g << 8 | b;
+  return '#' + (function(h){
+    return new Array(7-h.length).join("0")+h
+  })(bin.toString(16).toUpperCase())
 }
 
 const game = {
