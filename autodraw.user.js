@@ -31,6 +31,7 @@ function requestBuffer (url) {
   return fetch(url).then((d) => {return d.arrayBuffer()})
 }
 
+// Generate decimal to hexadecimal conversion table
 let hexTable = []
 for (let i = 0; i < 256; i++) {
   let hex = i.toString(16)
@@ -44,10 +45,12 @@ function rgbToHex (r, g, b) {
   return  `#${hexTable[r]}${hexTable[g]}${hexTable[b]}`
 }
 
+// CHeck if in animation gamemode
 function isAnimation () {
   return Boolean(document.getElementsByClassName('note').length)
 }
 
+// Proxy to modify client script
 Node.prototype.appendChild = new Proxy( Node.prototype.appendChild, {
     async apply (target, thisArg, [element]) {
         if (element.tagName == "SCRIPT") {
@@ -56,7 +59,6 @@ Node.prototype.appendChild = new Proxy( Node.prototype.appendChild, {
                 text = editScript(text)
                 let blob = new Blob([text])
                 element.src = URL.createObjectURL(blob)
-                // console.log(element)
             }
         }
         return Reflect.apply( ...arguments );
@@ -76,9 +78,12 @@ function editScript (text) {
     return text;
 }
 
+// Stores the current turn in the game
 let turnNum = null
+// Stores the websocket that is currently in use
 let currWs = null
 
+// Custom websocket class to capture current websocket
 class customWebSocket extends WebSocket {
     constructor(...args) {
         let ws = super(...args);
@@ -96,17 +101,16 @@ class customWebSocket extends WebSocket {
     }
     send(...args) {
       if (args[0] == '2') {
-        // console.log('A ping request was sent')
         // Fake pong to stop client disconnection
         // IDK if this is still necessary
         this.onmessage({data: '3'})
-        // return
       }
       return super.send(...args)
     }
 }
 unsafeWindow.WebSocket = customWebSocket
 
+// Converts an image element to the format that Gartic Phone uses
 function draw (image, fit='zoom', width=758, height=424, penSize=2) {
   console.log('[Autodraw] Drawing image')
 
@@ -120,15 +124,17 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
   ctx.fillStyle = 'white'
   ctx.fillRect(0, 0, width, height)
 
-  // Calculate the image position
+  // Calculate the image position and dimensions
   let imageX = 0
   let imageY = 0
   let imageWidth = width
   let imageHeight = height
+  // Stretch to fit by default (do nothing)
   if (fit != 'stretch') {
     const imageAspectRatio = image.width / image.height
     const canvasAspectRatio = canvas.width / canvas.height
     if (fit == 'zoom') {
+      // Zoom to fit
       if (imageAspectRatio > canvasAspectRatio) {
         imageWidth = image.width * (height / image.height)
         imageX = (width - imageWidth) / 2
@@ -137,6 +143,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
         imageY = (height - imageHeight) / 2
       }
     } else {
+      // Shrink to fit
       if (imageAspectRatio < canvasAspectRatio) {
         imageWidth = image.width * (height / image.height)
         imageX = (width - imageWidth) / 2
@@ -147,17 +154,17 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
     }
   }
 
-  // Draw the image
-  // console.log(image)
+  // Draw the image on the canvas
   ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight)
 
+  // Get RGB data from canvas
   let data = ctx.getImageData(0, 0, width, 424).data
 
   let packets = []
   let story = []
 
   if (isAnimation()) {
-    // Animation gamemode
+    // Animation gamemode requires different format
     let pos = 0
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
