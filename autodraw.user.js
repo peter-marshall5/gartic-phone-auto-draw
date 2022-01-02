@@ -99,14 +99,14 @@ class customWebSocket extends WebSocket {
         // console.log(ws)
         return ws;
     }
-    send(...args) {
-      if (args[0] == '2') {
-        // Fake pong to stop client disconnection
-        // IDK if this is still necessary
-        this.onmessage({data: '3'})
-      }
-      return super.send(...args)
-    }
+    // send(...args) {
+    //   if (args[0] == '2') {
+    //     // Fake pong to stop client disconnection
+    //     // IDK if this is still necessary
+    //     this.onmessage({data: '3'})
+    //   }
+    //   return super.send(...args)
+    // }
 }
 unsafeWindow.WebSocket = customWebSocket
 
@@ -295,7 +295,7 @@ function enableButton (e) {
   return e
 }
 
-function startDrawing () {
+function startDrawing (file) {
   if (unsafeWindow.location.href.indexOf('draw') == -1) {
    console.error('[Autodraw] You are not in the drawing section')
    return
@@ -304,9 +304,8 @@ function startDrawing () {
     console.error('[Autodraw] window.setData is missing! (Injector malfunction)')
     return
   }
-  pickFile()
-  .then(disableButton)
-  .then(createImage)
+  disableButton()
+  createImage(file)
   .then((e) => {
     closeDialog()
     return e
@@ -459,7 +458,16 @@ dropArea.style.borderRadius = '17px'
 dropArea.style.cursor = 'pointer'
 // dropArea.style.margin = '0 0 10px'
 dropArea.innerText = 'Drag and drop images here or click to choose a file'
-dropArea.onclick = startDrawing
+dropArea.onclick = function() {
+  pickFile().then(startDrawing)
+}
+dropArea.addEventListener('dragover', (e) => {
+  e.preventDefault()
+})
+dropArea.addEventListener('drop', (e) => {
+  e.preventDefault()
+  startDrawing(URL.createObjectURL(e.dataTransfer.files[0]))
+})
 modal.appendChild(dropArea)
 const bottomDiv = document.createElement('div')
 bottomDiv.style.width = '100%'
