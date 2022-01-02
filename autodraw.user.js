@@ -41,7 +41,7 @@ for (let i = 0; i < 256; i++) {
 }
 
 function rgbToHex (r, g, b) {
-  return  `#${hexTable[r]}${hexTable[g]}${hexTable[g]}`
+  return  `#${hexTable[r]}${hexTable[g]}${hexTable[b]}`
 }
 
 const game = {
