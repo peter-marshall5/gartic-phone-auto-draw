@@ -45,7 +45,8 @@ function rgbToHex (r, g, b) {
   return  `#${hexTable[r]}${hexTable[g]}${hexTable[b]}`
 }
 
-// CHeck if in animation gamemode
+// Check if in a gamemode with animation
+// Ex. Animation, Background, Solo
 function isAnimation () {
   return Boolean(document.getElementsByClassName('note').length)
 }
@@ -164,7 +165,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
   let story = []
 
   if (isAnimation()) {
-    // Animation gamemode requires different format
+    // Gamemodes with animation require different format
     let pos = 0
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
@@ -250,7 +251,7 @@ function sendPackets (packets, story) {
       // }
 
       // Limit to 100Kb at a time
-      while (currWs.bufferedAmount < 100000) {
+      while (currWs.bufferedAmount < 10000) {
         currWs.send(packets[p])
 
         sent += packets[p].length
@@ -295,7 +296,29 @@ function enableButton (e) {
   return e
 }
 
-function startDrawing (file) {
+let currentImage
+
+function loadImage (objectURL) {
+  // Store an image file
+  console.log('[Autodraw] Selected image')
+  dropPreview.style.display = 'block'
+  dropText.style.display = 'none'
+  currentImage = objectURL
+  dropPreview.src = objectURL
+}
+
+function unloadImage () {
+  dropPreview.style.display = 'none'
+  dropText.style.display = 'block'
+  currentImage = null
+  dropPreview.src = 'favicon.ico'
+}
+
+function startDrawing () {
+  if (!currentImage) {
+    console.error('[Autodraw] No image loaded')
+    return
+  }
   if (unsafeWindow.location.href.indexOf('draw') == -1) {
    console.error('[Autodraw] You are not in the drawing section')
    return
@@ -305,7 +328,7 @@ function startDrawing (file) {
     return
   }
   disableButton()
-  createImage(file)
+  createImage(currentImage)
   .then((e) => {
     closeDialog()
     return e
@@ -315,6 +338,7 @@ function startDrawing (file) {
   .then(() => {
     console.log('[Autodraw] Done!')
     closeDialog()
+    unloadImage()
   })
 }
 
@@ -456,38 +480,44 @@ dropArea.style.justifyContent = 'center'
 dropArea.style.border = '4px dashed gray'
 dropArea.style.borderRadius = '17px'
 dropArea.style.cursor = 'pointer'
+dropArea.style.overflow = 'hidden'
 // dropArea.style.margin = '0 0 10px'
-dropArea.innerText = 'Drag and drop images here or click to choose a file'
 dropArea.onclick = function() {
-  pickFile().then(startDrawing)
+  pickFile().then(loadImage)
 }
 dropArea.addEventListener('dragover', (e) => {
   e.preventDefault()
 })
 dropArea.addEventListener('drop', (e) => {
   e.preventDefault()
-  startDrawing(URL.createObjectURL(e.dataTransfer.files[0]))
+  loadImage(URL.createObjectURL(e.dataTransfer.files[0]))
 })
+const dropText = document.createElement('div')
+dropText.style.padding = '20px'
+dropText.innerText = 'Drag and drop images here or click to choose a file'
+dropArea.appendChild(dropText)
+const dropPreview = document.createElement('img')
+dropPreview.style.display = 'none'
+dropPreview.style.maxWidth = '95%'
+dropPreview.style.maxHeight = '95%'
+dropPreview.style.borderRadius = '6px'
+dropPreview.style.objectFit = 'cover'
+dropPreview.src = 'favicon.ico'
+dropArea.appendChild(dropPreview)
 modal.appendChild(dropArea)
 const bottomDiv = document.createElement('div')
 bottomDiv.style.width = '100%'
 bottomDiv.style.display = 'flex'
 bottomDiv.style.flexDirection = 'row'
 bottomDiv.style.margin = '20px 0 0'
+bottomDiv.style.justifyContent = 'center'
 modal.appendChild(bottomDiv)
-const urlInput = document.createElement('input')
-urlInput.style.width = '100%'
-urlInput.style.height = '34px'
-urlInput.style.border = '4px solid black'
-urlInput.style.borderRadius = '7px'
-urlInput.style.fontFamily = 'Bold'
-urlInput.style.fontSize = '19px'
-urlInput.style.padding = '0 10px'
-urlInput.placeholder = 'URL'
-bottomDiv.appendChild(urlInput)
 const insertButton = document.createElement('button')
 insertButton.classList = 'insert-button'
-insertButton.innerText = 'LOAD URL'
+insertButton.innerText = 'DRAW IMAGE'
+insertButton.onclick = function() {
+  startDrawing()
+}
 bottomDiv.appendChild(insertButton)
 const uiStyle = document.createElement('style')
 uiStyle.innerText = `
