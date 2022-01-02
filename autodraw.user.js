@@ -42,7 +42,7 @@ for (let i = 0; i < 256; i++) {
 }
 
 function rgbToHex (r, g, b) {
-  return  `#${hexTable[r]}${hexTable[g]}${hexTable[b]}`
+  return `#${hexTable[r]}${hexTable[g]}${hexTable[b]}`
 }
 
 // Check if in a gamemode with animation
@@ -163,6 +163,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
 
   let packets = []
   let story = []
+  let strokeId = 0
 
   if (isAnimation()) {
     // Gamemodes with animation require different format
@@ -170,8 +171,9 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         let color = rgbToHex(data[pos], data[pos+1], data[pos+2])
-        packets.push(`42[2,7,{"t":${turnNum},"d":1,"v":[1,-1,["${color}",${penSize},${data[pos+3]/255}],[${x},${y}]]}]`)
-        story.push([1, -1, [color, 2, data[3]/255], [x, y]])
+        packets.push(`42[2,7,{"t":${turnNum},"d":1,"v":[1,${strokeId},["${color}",${penSize},${data[pos+3]/255}],[${x},${y}]]}]`)
+        story.push([1, strokeId, [color, 2, data[3]/255], [x, y]])
+        strokeId++
         pos += 4
       }
     }
@@ -185,7 +187,10 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
         // let pos = i * 4
         let color = rgbToHex(data[pos], data[pos+1], data[pos+2])
         if (!dict[color]) {
-          dict[color] = `[8,-1,["${color}",${data[3]/255}],${x},${y},1,1`
+          // Huge stability improvement
+          // Use unique stroke ID
+          dict[color] = `[8,${strokeId},["${color}",${data[3]/255}],${x},${y},1,1`
+          strokeId++
         } else {
           dict[color] += ',' + x + ',' + y + ',1,1'
         }
@@ -226,10 +231,14 @@ function sendPackets (packets, story) {
     }
     currWs.addEventListener('message', pongHandler)
     currWs.send('2')
+    let pingInterval = setInterval(() => {
+      currWs.send('2')
+      pongCount++
+    }, 10000)
     function sendChunk () {
       // Check if websocket is in OPEN state
       if (currWs.readyState != WebSocket.OPEN) {
-        console.log('[Autodraw] Reconnecting')
+        console.log('[Autodraw] Reconnecting', currWs.readyState)
         setTimeout(sendChunk, 200)
         return
       }
@@ -251,7 +260,7 @@ function sendPackets (packets, story) {
       // }
 
       // Limit to 100Kb at a time
-      while (currWs.bufferedAmount < 10000) {
+      while (currWs.bufferedAmount < 100000) {
         currWs.send(packets[p])
 
         sent += packets[p].length
@@ -259,8 +268,10 @@ function sendPackets (packets, story) {
         p++
 
         if (p >= packets.length) {
+          clearInterval(pingInterval)
           currWs.send('2')
           // Exit if the websocket closes
+          console.log('[Autodraw] Finished sending packets')
           currWs.addEventListener('close', resolve)
           return
         }
