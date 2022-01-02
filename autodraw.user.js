@@ -468,7 +468,7 @@ bottomDiv.style.margin = '20px 0 0'
 modal.appendChild(bottomDiv)
 const urlInput = document.createElement('input')
 urlInput.style.width = '100%'
-urlInput.style.height = '36px'
+urlInput.style.height = '34px'
 urlInput.style.border = '4px solid black'
 urlInput.style.borderRadius = '7px'
 urlInput.style.fontFamily = 'Bold'
@@ -477,28 +477,27 @@ urlInput.style.padding = '0 10px'
 urlInput.placeholder = 'URL'
 bottomDiv.appendChild(urlInput)
 const insertButton = document.createElement('button')
-insertButton.style.boxShadow = 'rgb(48 26 107) 0px 6px 0px 0px'
-insertButton.style.alignItems = 'center'
-insertButton.style.borderRadius = '7px'
-insertButton.style.border = '2px solid black'
-insertButton.style.fontFamily = 'Black'
-insertButton.style.cursor = 'pointer'
 insertButton.classList = 'insert-button'
-insertButton.innerText = 'Insert URL'
+insertButton.innerText = 'LOAD URL'
 bottomDiv.appendChild(insertButton)
 const uiStyle = document.createElement('style')
 uiStyle.innerText = `
 .insert-button:hover {
-  background-color: rgb(203, 182, 233);
-}
-.insert-button:active {
-  margin: 4px 0px 2px 8px;
-  box-shadow: rgb(48 26 107) 0px 2px 0px 0px !important;
+  background-color: rgb(64, 32, 194);
 }
 .insert-button {
-  margin: 0px 0px 6px 8px;
-  background-color: rgb(255, 255, 255);
-  box-shadow: rgb(48 26 107) 0px 6px 0px 0px;
+  margin: 0px 8px;
+  cursor: pointer;
+  border: none;
+  background-color: rgb(86, 53, 220);
+  border-radius: 7px;
+  width: 160px;
+  height: 42px;
+  font-family: Black;
+  font-size: 17px;
+  color: rgb(255, 255, 255);
+  text-align: center;
+  text-transform: uppercase;
 }
 .autodraw-container {
   transition: opacity linear 0.2s;
