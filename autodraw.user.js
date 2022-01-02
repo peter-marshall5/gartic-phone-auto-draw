@@ -44,9 +44,8 @@ function rgbToHex (r, g, b) {
   return  `#${hexTable[r]}${hexTable[g]}${hexTable[b]}`
 }
 
-const game = {
-  getScale: () => {return (window.innerWidth - (window.innerWidth < 1920 ? 180 : 320)) / 1150 },
-  isAnimation: () => {return Boolean(document.getElementsByClassName('note').length)}
+function isAnimation () {
+  return Boolean(document.getElementsByClassName('note').length)
 }
 
 Node.prototype.appendChild = new Proxy( Node.prototype.appendChild, {
@@ -157,7 +156,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
   let packets = []
   let story = []
 
-  if (game.isAnimation()) {
+  if (isAnimation()) {
     // Animation gamemode
     let pos = 0
     for (let y = 0; y < height; y++) {
