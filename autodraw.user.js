@@ -196,8 +196,6 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
       let stroke = `42[2,7,{"t":${turnNum},"d":1,"v":`+dict[key]+`]}]`
       story.push(JSON.parse(dict[key] + `]`))
       packets.push(stroke)
-      // Free up some memory
-      delete dict[key]
     }
     unsafeWindow.setData((function(e){ return story })())
   }
@@ -256,9 +254,6 @@ function sendPackets (packets, story) {
         currWs.send(packets[p])
 
         sent += packets[p].length
-
-        // Free up some memory
-        delete packets[p]
 
         p++
 
