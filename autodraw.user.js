@@ -98,7 +98,8 @@ class customWebSocket extends WebSocket {
     send(...args) {
       if (args[0] == '2') {
         // console.log('A ping request was sent')
-        // Fake pong to stop disconnection
+        // Fake pong to stop client disconnection
+        // IDK if this is still necessary
         this.onmessage({data: '3'})
         // return
       }
@@ -221,23 +222,31 @@ function sendPackets (packets, story) {
     currWs.addEventListener('message', pongHandler)
     currWs.send('2')
     function sendChunk () {
-      while (p < packets.length) {
-        // Check if websocket is in OPEN state
-        if (currWs.readyState != WebSocket.OPEN) {
-          console.log('[Autodraw] Reconnecting')
-          setTimeout(sendChunk, 200)
-          return
-        }
+      // Check if websocket is in OPEN state
+      if (currWs.readyState != WebSocket.OPEN) {
+        console.log('[Autodraw] Reconnecting')
+        setTimeout(sendChunk, 200)
+        return
+      }
 
-        // Ping sprinkling
-        // Stops server from disconnecting
-        if (sent + packets[p].length > 4000000) {
-          currWs.send('2')
-          sent = 0
-          pongCount++
-          // console.log('Ping sprinkling')
-        }
+      // Only send data when nothing is buffered
+      if (currWs.bufferedAmount > 0) {
+        // Schedule for next javascript tick
+        setTimeout(sendChunk, 0)
+        return
+      }
 
+      // Ping sprinkling
+      // Stops server from disconnecting
+      // if (sent + packets[p].length > 4000000) {
+      //   currWs.send('2')
+      //   sent = 0
+      //   pongCount++
+      //   // console.log('Ping sprinkling')
+      // }
+
+      // Limit to 100Kb at a time
+      while (currWs.bufferedAmount < 100000) {
         currWs.send(packets[p])
 
         sent += packets[p].length
@@ -254,6 +263,7 @@ function sendPackets (packets, story) {
           return
         }
       }
+      setTimeout(sendChunk, 0)
     }
     sendChunk()
   })
