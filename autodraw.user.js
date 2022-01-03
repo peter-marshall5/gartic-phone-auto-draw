@@ -186,21 +186,21 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
       for (let x = 0; x < width; x++) {
         // let pos = i * 4
         let color = rgbToHex(data[pos], data[pos+1], data[pos+2])
-        if (!dict[color]) {
+        if (dict[color] == undefined) {
           // Huge stability improvement
           // Use unique stroke ID
-          dict[color] = `[8,${strokeId},["${color}",${data[3]/255}],${x},${y},1,1`
+          dict[color] = [8, strokeId, [color, data[3]/255], x, y, 1, 1]
           strokeId++
         } else {
-          dict[color] += ',' + x + ',' + y + ',1,1'
+          dict[color].push(x, y, 1, 1)
         }
         pos += 4
       }
     }
 
     for (let key in dict) {
-      let stroke = `42[2,7,{"t":${turnNum},"d":1,"v":`+dict[key]+`]}]`
-      story.push(JSON.parse(dict[key] + `]`))
+      story.push(dict[key])
+      let stroke = `42[2,7,{"t":${turnNum},"d":1,"v":`+JSON.stringify(dict[key])+`}]`
       packets.push(stroke)
     }
     unsafeWindow.setData((function(e){ return story })())
