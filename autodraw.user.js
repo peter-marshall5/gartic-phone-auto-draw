@@ -73,8 +73,8 @@ Node.prototype.appendChild = new Proxy( Node.prototype.appendChild, {
 
 function editScript (text) {
     let functionFinalDraw = text.match(/function\s\w{1,}\(\w{0,}\){[^\{]+{[^\}]{0,}return\[\]\.concat\(Object\(\w{0,}\.*\w{0,}\)\(\w{0,}\),\[\w{0,}\]\)[^\}]{0,}}[^\}]{0,}}/g)[0];
-    let setDataVar = functionFinalDraw.match(/\w{1,}(?=\.setData)/g)[0];
-    text = text.replace(/(?<=\(\(function\(\){)(?=if\(!\w{1,}\.disabled\))/, `;window.setData = ${setDataVar}.setData;`);
+    let setDataVar = functionFinalDraw.match(/\w{1,}(?=\.setData)/g)[0]
+    text = text.replace(/(?<=\(\(function\(\){)(?=if\(!\w{1,}\.disabled\))/, `;window.setData = ${setDataVar}.setData;`)
     // console.log(setDataVar)
     return text;
 }
@@ -93,21 +93,12 @@ class customWebSocket extends WebSocket {
         ws.addEventListener('message', (e) => {
           // console.log(e.data)
             if (e.data && typeof e.data == 'string' && e.data.includes('[')) {
-                let t = JSON.parse(e.data.replace(/[^\[]{0,}/, ''))[2];
-                if (t?.hasOwnProperty('turnNum')) turnNum = t.turnNum;
+                let t = JSON.parse(e.data.replace(/[^\[]{0,}/, ''))[2]
+                if (t?.hasOwnProperty('turnNum')) turnNum = t.turnNum
             }
-        });
-        // console.log(ws)
+        })
         return ws;
     }
-    // send(...args) {
-    //   if (args[0] == '2') {
-    //     // Fake pong to stop client disconnection
-    //     // IDK if this is still necessary
-    //     this.onmessage({data: '3'})
-    //   }
-    //   return super.send(...args)
-    // }
 }
 unsafeWindow.WebSocket = customWebSocket
 
@@ -249,15 +240,6 @@ function sendPackets (packets, story) {
         setTimeout(sendChunk, 0)
         return
       }
-
-      // Ping sprinkling
-      // Stops server from disconnecting
-      // if (sent + packets[p].length > 4000000) {
-      //   currWs.send('2')
-      //   sent = 0
-      //   pongCount++
-      //   // console.log('Ping sprinkling')
-      // }
 
       // Limit to 100Kb at a time
       while (currWs.bufferedAmount < 100000) {
