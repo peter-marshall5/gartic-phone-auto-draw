@@ -75,7 +75,7 @@ function editScript (text) {
   // find the variable that setData is part of
   let setDataVar = functionFinalDraw.match(/\w{1,}(?=\.setData)/g)[0]
   // Expose setData to the script
-  text = text.replace(/(?<=\(\(function\(\){)(?=if\(!\w{1,}\.disabled\))/, `;window.setData = ${setDataVar}.setData;`)
+  text = text.replace(/\(\(function\(\){if\(!\w{1,}\.disabled\)/, `((function(){;window.setData = ${setDataVar}.setData;if(!${setDataVar}.disabled)`)
   return text
 }
 
