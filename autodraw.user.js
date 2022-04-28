@@ -53,30 +53,30 @@ function isAnimation () {
 
 // Proxy to modify client script
 Node.prototype.appendChild = new Proxy( Node.prototype.appendChild, {
-    async apply (target, thisArg, [element]) {
-        if (element.tagName == "SCRIPT") {
-            if (element.src.indexOf('draw') != -1) {
-                let text = await requestText(element.src)
-                text = editScript(text)
-                let blob = new Blob([text])
-                element.src = URL.createObjectURL(blob)
-            }
-        }
-        return Reflect.apply( ...arguments );
+  async apply (target, thisArg, [element]) {
+    if (element.tagName == "SCRIPT") {
+      if (element.src.indexOf('draw') != -1) {
+        let text = await requestText(element.src)
+        text = editScript(text)
+        let blob = new Blob([text])
+        element.src = URL.createObjectURL(blob)
+      }
     }
-});
+    return Reflect.apply( ...arguments )
+  }
+})
 
 /* stroke configuration note */
 /* [toolID, strokeID, [color, 18, 0.6], [x0, y0]. [x1, y1], ..., [xn, yn]] */
 
-// Beware of regex spaghetti code
-
 function editScript (text) {
-    let functionFinalDraw = text.match(/function\s\w{1,}\(\w{0,}\){[^\{]+{[^\}]{0,}return\[\]\.concat\(Object\(\w{0,}\.*\w{0,}\)\(\w{0,}\),\[\w{0,}\]\)[^\}]{0,}}[^\}]{0,}}/g)[0];
-    let setDataVar = functionFinalDraw.match(/\w{1,}(?=\.setData)/g)[0]
-    text = text.replace(/(?<=\(\(function\(\){)(?=if\(!\w{1,}\.disabled\))/, `;window.setData = ${setDataVar}.setData;`)
-    // console.log(setDataVar)
-    return text;
+  // Find the final draw function
+  let functionFinalDraw = text.match(/function\s\w{1,}\(\w{0,}\){[^\{]+{[^\}]{0,}return\[\]\.concat\(Object\(\w{0,}\.*\w{0,}\)\(\w{0,}\),\[\w{0,}\]\)[^\}]{0,}}[^\}]{0,}}/g)[0]
+  // find the variable that setData is part of
+  let setDataVar = functionFinalDraw.match(/\w{1,}(?=\.setData)/g)[0]
+  // Expose setData to the script
+  text = text.replace(/(?<=\(\(function\(\){)(?=if\(!\w{1,}\.disabled\))/, `;window.setData = ${setDataVar}.setData;`)
+  return text
 }
 
 // Stores the current turn in the game
@@ -86,21 +86,44 @@ let currWs = null
 
 // Custom websocket class to capture current websocket
 class customWebSocket extends WebSocket {
-    constructor(...args) {
-        let ws = super(...args);
-        currWs = ws;
-        // console.log(ws)
-        ws.addEventListener('message', (e) => {
-          // console.log(e.data)
-            if (e.data && typeof e.data == 'string' && e.data.includes('[')) {
-                let t = JSON.parse(e.data.replace(/[^\[]{0,}/, ''))[2]
-                if (t?.hasOwnProperty('turnNum')) turnNum = t.turnNum
-            }
-        })
-        return ws;
-    }
+  constructor(...args) {
+    let ws = super(...args)
+    currWs = ws
+    // console.log(ws)
+    ws.addEventListener('message', (e) => {
+      // console.log(e.data)
+      if (e.data && typeof e.data == 'string' && e.data.includes('[')) {
+        let t = JSON.parse(e.data.replace(/[^\[]{0,}/, ''))[2]
+        if (t?.hasOwnProperty('turnNum')) turnNum = t.turnNum
+      }
+    })
+    return ws
+  }
 }
 unsafeWindow.WebSocket = customWebSocket
+
+let drawEnabled = true
+
+CanvasRenderingContext2D.prototype.stroke = new Proxy( CanvasRenderingContext2D.prototype.stroke, {
+  async apply (target, thisArg, [element]) {
+    if (drawEnabled) return Reflect.apply( ...arguments )
+    return
+  }
+})
+
+CanvasRenderingContext2D.prototype.fill = new Proxy( CanvasRenderingContext2D.prototype.fill, {
+  async apply (target, thisArg, [element]) {
+    if (drawEnabled) return Reflect.apply( ...arguments )
+    return
+  }
+})
+
+CanvasRenderingContext2D.prototype.clearRect = new Proxy( CanvasRenderingContext2D.prototype.clearRect, {
+  async apply (target, thisArg, [element]) {
+    if (drawEnabled) return Reflect.apply( ...arguments )
+    return
+  }
+})
 
 // Converts an image element to the format that Gartic Phone uses
 function draw (image, fit='zoom', width=758, height=424, penSize=2) {
@@ -149,6 +172,11 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
   // Draw the image on the canvas
   ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight)
 
+  // Draw the image on the game canvas
+  let gc = document.querySelector('.jsx-187140558')
+   gc.getContext('2d')
+  .drawImage(canvas, 0, 0, gc.width, gc.height)
+
   // Get RGB data from canvas
   let data = ctx.getImageData(0, 0, width, 424).data
 
@@ -168,6 +196,7 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
         pos += 4
       }
     }
+    drawEnabled = false
     unsafeWindow.setData((function(e){ return story })())
   } else {
     // Other gamemodes
@@ -194,11 +223,14 @@ function draw (image, fit='zoom', width=758, height=424, penSize=2) {
       let stroke = `42[2,7,{"t":${turnNum},"d":1,"v":`+JSON.stringify(dict[key])+`}]`
       packets.push(stroke)
     }
+    drawEnabled = false
     unsafeWindow.setData((function(e){ return story })())
   }
 
   // Send packets to server
+  drawEnabled = true
   return sendPackets(packets, story)
+  //.then(() => drawEnabled = true)
 }
 
 function sendPackets (packets, story) {
@@ -321,18 +353,17 @@ function startDrawing () {
     return
   }
   disableButton()
-  createImage(currentImage)
-  .then((e) => {
-    closeDialog()
-    return e
-  })
-  .then(draw)
-  .then(enableButton)
-  .then(() => {
-    console.log('[Autodraw] Done!')
-    closeDialog()
-    unloadImage()
-  })
+  closeDialog()
+  setTimeout(() => {
+    createImage(currentImage)
+    .then(draw)
+    .then(enableButton)
+    .then(() => {
+      console.log('[Autodraw] Done!')
+      closeDialog()
+      unloadImage()
+    })
+  }, 500)
 }
 
 function pickFile () {
