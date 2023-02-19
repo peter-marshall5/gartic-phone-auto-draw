@@ -302,7 +302,6 @@ let bottomContainer
 // Fake "Done" button that shows while drawing
 // Prevents submitting before all packets are sent
 let fakeButton = document.createElement('button')
-fakeButton.classList = 'jsx-4289504161 small'
 fakeButton.disabled = true
 fakeButton.style.display = 'none'
 fakeButton.innerHTML = '<i class="jsx-3322258600 pencil"></i><strong>Drawing...</strong>'
@@ -391,31 +390,42 @@ function createImage (url) {
 
 function injectUI () {
   // Get the side menu container
-  const sideMenu = document.querySelector('.jsx-2643802174.tools > .jsx-2643802174')
-  if (!sideMenu) {
+  const redoButton = unsafeWindow.document.querySelector(".tool.redo")
+  if (!redoButton) {
     return
   }
-  if (sideMenu.childElementCount > 10) {
+
+  const buttonClass = redoButton.classList[0]
+  if (!buttonClass) {
+      console.log('[Autodraw] Could not find tool button class')
+  }
+
+  const sideMenu = redoButton.parentElement;
+  if (!sideMenu || sideMenu.children.length > 10) {
     return
   }
   sideMenu.style.height = 'unset'
 
-  doneButton = document.querySelector('button.jsx-4289504161.small')
-  bottomContainer = document.querySelector('.jsx-2849961842.bottom')
+  bottomContainer = document.querySelector('.bottom')
+
+  doneButton = bottomContainer.querySelector('.small')
+  const doneButtonClass = doneButton.classList[0]
+
+  fakeButton.classList = doneButtonClass + ' small'
 
   // Add the fake button
   bottomContainer.appendChild(fakeButton)
 
   // Create the "Add image" button
   const addImageButton = document.createElement('div')
-  addImageButton.classList = 'jsx-2643802174 tool image'
+  addImageButton.classList = buttonClass + ' tool addimage'
   addImageButton.style.margin = '6px 0 1px 0'
   addImageButton.style.backgroundSize = '100%'
   addImageButton.style.color = '#d16283'
 
   // Add style
   const style = document.createElement('style')
-  style.innerText = `.jsx-2643802174.tool.image::after {
+  style.innerText = '.' + buttonClass + `.addimage::after {
     content: "+";
     margin: 2px;
     flex: 1 1 0%;
@@ -424,7 +434,7 @@ function injectUI () {
     font: 60px Black;
     transform: translate(0px, -20px);
   }`
-  document.head.appendChild(style)
+  unsafeWindow.document.head.appendChild(style)
   sideMenu.appendChild(addImageButton)
 
   // Click handler
@@ -566,11 +576,19 @@ uiStyle.innerText = `
   transition: opacity linear 0.2s;
 }`
 
-unsafeWindow.startDrawing = startDrawing
-document.addEventListener('DOMContentLoaded', () => {
+function injectAll () {
   setInterval(injectUI, 300)
 
   // Add UI
   document.body.appendChild(container)
   document.head.appendChild(uiStyle)
-})
+}
+
+unsafeWindow.startDrawing = startDrawing
+let stateCheck = setInterval(() => {
+  if (unsafeWindow.document.readyState === 'complete') {
+    injectAll()
+    clearInterval(stateCheck)
+  }
+}, 100);
+
