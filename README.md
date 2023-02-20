@@ -1,3 +1,7 @@
+# Patched
+
+The Gartic phone servers now seem to rate-limit how fast we can send packets. This means that the draw bot will no longer work.
+
 ## What is this?
 
 This is the **BEST** auto-draw script for Gartic Phone.
